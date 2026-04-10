@@ -45,10 +45,18 @@ program
 
 program
   .command('serve')
-  .description('Start local HTTP server for web UI connection')
+  .description('Start local HTTP API server for web UI connection')
   .option('-p, --port <port>', 'Port number', '4747')
   .option('--host <host>', 'Bind address (default: 127.0.0.1, use 0.0.0.0 for remote access)')
+  .option('--ui', 'Also serve the bundled web UI from the same server')
   .action(createLazyAction(() => import('./serve.js'), 'serveCommand'));
+
+program
+  .command('serve-local')
+  .description('Start local HTTP API server and bundled web UI')
+  .option('-p, --port <port>', 'Port number', '4747')
+  .option('--host <host>', 'Bind address (default: 127.0.0.1, use 0.0.0.0 for remote access)')
+  .action(createLazyAction(() => import('./serve.js'), 'serveLocalCommand'));
 
 program
   .command('mcp')

@@ -57,7 +57,7 @@ https://github.com/user-attachments/assets/172685ba-8e54-4ea7-9ad1-e31a3398da72
 | **Parsing** | Tree-sitter native bindings                                    | Tree-sitter WASM                                             |
 | **Privacy** | Everything local, no network                                   | Everything in-browser, no server                             |
 
-> **Bridge mode:** `gitnexus serve` connects the two — the web UI auto-detects the local server and can browse all your CLI-indexed repos without re-uploading or re-indexing.
+> **Bridge mode:** `gitnexus serve` runs the local backend API for the hosted or dev web UI. Use `gitnexus serve-local` (or `gitnexus serve --ui`) to self-host the bundled UI and API together on one port.
 
 ---
 
@@ -337,7 +337,7 @@ npm run dev
 
 The web UI uses the same indexing pipeline as the CLI but runs entirely in WebAssembly (Tree-sitter WASM, LadybugDB WASM, in-browser embeddings). It's great for quick exploration but limited by browser memory for larger repos.
 
-**Local Backend Mode:** Run `gitnexus serve` and open the web UI locally — it auto-detects the server and shows all your indexed repos, with full AI chat support. No need to re-upload or re-index. The agent's tools (Cypher queries, search, code navigation) route through the backend HTTP API automatically.
+**Local Backend Mode:** Run `gitnexus serve` and point the web UI at your local backend, or run `gitnexus serve-local` to self-host the bundled UI and API together. Both modes can browse your CLI-indexed repos without re-uploading or re-indexing.
 
 ---
 

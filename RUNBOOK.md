@@ -109,6 +109,9 @@ Then re-run `npx gitnexus analyze` (and `--embeddings` if you need vectors).
 cd gitnexus
 npx gitnexus serve
 # default http://127.0.0.1:4747 — see serve --help for port/host
+
+# self-host bundled UI + API together
+npx gitnexus serve-local
 ```
 
 Use when the browser UI should talk to **local** indexed repos instead of WASM-only mode.

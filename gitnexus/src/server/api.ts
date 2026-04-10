@@ -11,6 +11,7 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import { existsSync } from 'node:fs';
 import fs from 'fs/promises';
 import { createRequire } from 'node:module';
 import { loadMeta, listRegisteredRepos, getStoragePath } from '../storage/repo-manager.js';
@@ -37,6 +38,35 @@ import { extractRepoName, getCloneDir, cloneOrPull } from './git-clone.js';
 
 const _require = createRequire(import.meta.url);
 const pkg = _require('../../package.json');
+const SELF_HOSTED_UI_QUERY_PARAM = 'server';
+
+export const buildSelfHostedUiRedirectUrl = (
+  requestUrl: string,
+  serverBaseUrl: string,
+): string => {
+  const url = new URL(requestUrl, serverBaseUrl);
+  url.searchParams.set(SELF_HOSTED_UI_QUERY_PARAM, serverBaseUrl);
+  return `${url.pathname}${url.search}`;
+};
+
+export const resolveBundledWebUiDist = (
+  currentFileUrl: string = import.meta.url,
+  pathExists: (candidate: string) => boolean = existsSync,
+): string | null => {
+  const baseDir = path.dirname(fileURLToPath(currentFileUrl));
+  const candidates = [
+    path.resolve(baseDir, '..', 'web'),
+    path.resolve(baseDir, '..', '..', '..', 'gitnexus-web', 'dist'),
+  ];
+
+  for (const candidate of candidates) {
+    if (pathExists(candidate)) {
+      return candidate;
+    }
+  }
+
+  return null;
+};
 
 /**
  * Determine whether an HTTP Origin header value is allowed by CORS policy.
@@ -424,7 +454,15 @@ const requestedRepo = (req: express.Request): string | undefined => {
   return undefined;
 };
 
-export const createServer = async (port: number, host: string = '127.0.0.1') => {
+export interface CreateServerOptions {
+  serveWebUi?: boolean;
+}
+
+export const createServer = async (
+  port: number,
+  host: string = '127.0.0.1',
+  options: CreateServerOptions = {},
+) => {
   const app = express();
   app.disable('x-powered-by');
 
@@ -1456,6 +1494,52 @@ export const createServer = async (port: number, host: string = '127.0.0.1') => 
     embedJobManager.cancelJob(req.params.jobId, 'Cancelled by user');
     res.json({ id: job.id, status: 'failed', error: 'Cancelled by user' });
   });
+
+  const webUiDist = options.serveWebUi ? resolveBundledWebUiDist() : null;
+  if (webUiDist) {
+    const webUiIndex = path.join(webUiDist, 'index.html');
+
+    console.log(`Bundled web UI mounted from ${webUiDist}`);
+
+    app.use(
+      express.static(webUiDist, {
+        index: false,
+      }),
+    );
+
+    app.get('/', (req, res) => {
+      if (!req.query[SELF_HOSTED_UI_QUERY_PARAM]) {
+        const serverBaseUrl = `${req.protocol}://${req.get('host')}`;
+        res.redirect(buildSelfHostedUiRedirectUrl(req.originalUrl, serverBaseUrl));
+        return;
+      }
+
+      res.sendFile(webUiIndex);
+    });
+
+    app.get('*', (req, res, next) => {
+      if (req.path === '/api' || req.path.startsWith('/api/')) {
+        next();
+        return;
+      }
+
+      if (path.extname(req.path)) {
+        next();
+        return;
+      }
+
+      if (!req.accepts('html')) {
+        next();
+        return;
+      }
+
+      res.sendFile(webUiIndex);
+    });
+  } else {
+    if (options.serveWebUi) {
+      console.warn('Bundled web UI not found; serving API endpoints only.');
+    }
+  }
 
   // Global error handler — catch anything the route handlers miss
   app.use((err: any, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

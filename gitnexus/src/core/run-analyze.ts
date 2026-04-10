@@ -125,6 +125,10 @@ export async function runFullAnalysis(
   if (existingMeta && !options.force && existingMeta.lastCommit === currentCommit) {
     // Non-git folders have currentCommit = '' — always rebuild since we can't detect changes
     if (currentCommit !== '') {
+      // Re-register existing indexes so fresh servers discover repos even when
+      // analysis short-circuits on an up-to-date .gitnexus folder.
+      await registerRepo(repoPath, existingMeta);
+
       return {
         repoName: path.basename(repoPath),
         repoPath,

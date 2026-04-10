@@ -156,7 +156,9 @@ gitnexus analyze --embeddings    # Enable embedding generation (slower, better s
 gitnexus analyze --skip-agents-md  # Preserve custom AGENTS.md/CLAUDE.md gitnexus section edits
 gitnexus analyze --verbose       # Log skipped files when parsers are unavailable
 gitnexus mcp                     # Start MCP server (stdio) — serves all indexed repos
-gitnexus serve                   # Start local HTTP server (multi-repo) for web UI
+gitnexus serve                   # Start local HTTP API server (multi-repo) for web UI
+gitnexus serve --ui              # Serve the bundled local UI and API from one port
+gitnexus serve-local             # Same as `serve --ui`
 gitnexus index                   # Register an existing .gitnexus/ folder into the global registry
 gitnexus list                    # List all indexed repositories
 gitnexus status                  # Show index status for current repo
@@ -245,7 +247,7 @@ Installed automatically by both `gitnexus analyze` (per-repo) and `gitnexus setu
 
 GitNexus also has a browser-based UI at [gitnexus.vercel.app](https://gitnexus.vercel.app) — 100% client-side, your code never leaves the browser.
 
-**Local Backend Mode:** Run `gitnexus serve` and open the web UI locally — it auto-detects the server and shows all your indexed repos, with full AI chat support. No need to re-upload or re-index. The agent's tools (Cypher queries, search, code navigation) route through the backend HTTP API automatically.
+**Local Backend Mode:** Run `gitnexus serve` to expose the backend API to the hosted or dev web UI, or run `gitnexus serve-local` to self-host the bundled UI and API together. Both modes can browse your indexed repos without re-uploading or re-indexing.
 
 ## License
 

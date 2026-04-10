@@ -12,7 +12,13 @@ process.on('unhandledRejection', (reason: any) => {
   process.exit(1);
 });
 
-export const serveCommand = async (options?: { port?: string; host?: string }) => {
+type ServeCommandOptions = {
+  port?: string;
+  host?: string;
+  ui?: boolean;
+};
+
+const runServeCommand = async (options: ServeCommandOptions = {}, serveWebUi: boolean = false) => {
   const port = Number(options?.port ?? 4747);
   // Default to 'localhost' so the OS decides whether to bind to 127.0.0.1 or
   // ::1 based on system configuration, avoiding spurious CORS errors when the
@@ -20,7 +26,7 @@ export const serveCommand = async (options?: { port?: string; host?: string }) =
   const host = options?.host ?? 'localhost';
 
   try {
-    await createServer(port, host);
+    await createServer(port, host, { serveWebUi: serveWebUi || Boolean(options?.ui) });
   } catch (err: any) {
     console.error(`\nFailed to start GitNexus server:\n`);
     console.error(`  ${err.message || err}\n`);
@@ -34,4 +40,12 @@ export const serveCommand = async (options?: { port?: string; host?: string }) =
     }
     process.exit(1);
   }
+};
+
+export const serveCommand = async (options?: ServeCommandOptions) => {
+  await runServeCommand(options, false);
+};
+
+export const serveLocalCommand = async (options?: Omit<ServeCommandOptions, 'ui'>) => {
+  await runServeCommand(options, true);
 };
